@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -12,6 +13,21 @@ typedef Widget LoadingErrorWidgetBuilder(
     BuildContext context, String url, dynamic error);
 
 class CachedNetworkImage extends StatefulWidget {
+  /// Evict an image from both the disk file based caching system of the
+  /// [BaseCacheManager] as the in memory [ImageCache] of the [ImageProvider].
+  /// [url] is used by both the disk and memory cache. The scale is only used
+  /// to clear the image from the [ImageCache].
+  static Future evictFromCache(
+    String url, {
+    String cacheKey,
+    BaseCacheManager cacheManager,
+    double scale = 1.0,
+  }) async {
+    cacheManager = cacheManager ?? DefaultCacheManager();
+    await cacheManager.removeFile(cacheKey ?? url);
+    return CachedNetworkImageProvider(url, scale: scale).evict();
+  }
+  final CachedNetworkImageProvider _image;
   /// Option to use cachemanager with other settings
   final BaseCacheManager cacheManager;
 
@@ -169,6 +185,11 @@ class CachedNetworkImage extends StatefulWidget {
         assert(filterQuality != null),
         assert(repeat != null),
         assert(matchTextDirection != null),
+        _image = CachedNetworkImageProvider(
+          imageUrl,
+          headers: httpHeaders,
+          cacheManager: cacheManager,
+        ),
         super(key: key);
 
   @override
